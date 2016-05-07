@@ -1,5 +1,7 @@
 package uk.co.iansullivan.workflow.run;
 
+import java.util.Map;
+
 import uk.co.iansullivan.workflow.containers.JobContainer;
 import uk.co.iansullivan.workflow.containers.executors.JobContainerExecutor;
 import uk.co.iansullivan.workflow.jobs.JobParameters;
@@ -14,16 +16,21 @@ public class Workflow {
     }
     
     public static JobResult run(JobContainer root, WorkflowConfiguration configuration) {
-        return run(root, configuration, new JobParameters());
+        return run(root, configuration, null);
     }
     
-    public static JobResult run(JobContainer root, WorkflowConfiguration configuration, JobParameters initalParameters) {
+    public static JobResult run(JobContainer root, Map<String, Object> initalParameters) {
+        return run(root, new WorkflowConfiguration(), initalParameters);
+    }
+    
+    public static JobResult run(JobContainer root, WorkflowConfiguration configuration, Map<String, Object> initalParameters) {
+       JobParameters initialJobParameters = new JobParameters(initalParameters);
        JobRunner jobRunner = configuration.getJobRunner();
        JobListener jobListener = configuration.getJobListener();
        WorkflowContext context = new WorkflowContext(jobRunner, jobListener);
        JobContainerExecutor rootExecutor = root.createExecutor();
        
-       JobExecution rootResult = rootExecutor.execute(context, initalParameters);
+       JobExecution rootResult = rootExecutor.execute(context, initialJobParameters);
          
        while(!rootResult.isFinished()) {
            jobRunner.blockUntilNextJobFinishes(jobListener);
